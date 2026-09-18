@@ -280,34 +280,60 @@ function ChatWindow() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 p-4">
-      <div className="mx-auto flex h-[700px] w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-lg">
+    <div className="min-h-screen bg-slate-100 px-3 py-3 sm:px-6 sm:py-6">
+      <div className="mx-auto flex h-[calc(100vh-24px)] min-h-[620px] max-w-7xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60 sm:h-[calc(100vh-48px)]">
 
         {/* Sidebar */}
-        <aside className="flex w-64 flex-col border-r border-gray-200">
+        <aside className="hidden w-72 flex-col border-r border-slate-200 bg-slate-50/80 md:flex">
 
-          <div className="border-b border-gray-200 p-4">
+          {/* Sidebar Header */}
+          <div className="border-b border-slate-200 p-5">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm">
+                W
+              </div>
+
+              <div>
+                <h1 className="text-sm font-bold text-slate-900">
+                  WorkMate AI
+                </h1>
+                <p className="text-xs text-slate-500">
+                  Employee assistant
+                </p>
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={handleNewChat}
-              className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md active:scale-[0.99]"
             >
-              + New Chat
+              <span className="text-lg leading-none">+</span>
+              New Chat
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3">
-            <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Conversations
-            </p>
+          {/* Conversations */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="mb-3 flex items-center justify-between px-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Conversations
+              </p>
+
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                {conversations.length}
+              </span>
+            </div>
 
             {conversations.length === 0 && (
-              <p className="px-2 text-sm text-gray-400">
-                No conversations yet.
-              </p>
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-3 py-5 text-center">
+                <p className="text-xs text-slate-400">
+                  No conversations yet.
+                </p>
+              </div>
             )}
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {conversations.map((conversation) => {
                 const isActive =
                   conversation.thread_id === threadId;
@@ -321,55 +347,92 @@ function ChatWindow() {
                         conversation.thread_id
                       )
                     }
-                    className={`w-full rounded-lg px-3 py-3 text-left text-sm ${
+                    className={`group w-full rounded-xl border px-3 py-3 text-left transition ${
                       isActive
-                        ? "bg-gray-100 font-medium text-gray-900"
-                        : "text-gray-600 hover:bg-gray-50"
+                        ? "border-blue-100 bg-blue-50 text-blue-900 shadow-sm"
+                        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-900"
                     }`}
                   >
-                    <p className="truncate">
-                      {conversation.title}
-                    </p>
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
+                          isActive
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-200 text-slate-500 group-hover:bg-slate-300"
+                        }`}
+                      >
+                        C
+                      </div>
+
+                      <p className="truncate text-sm font-medium">
+                        {conversation.title}
+                      </p>
+                    </div>
                   </button>
                 );
               })}
             </div>
           </div>
+
+          {/* Sidebar Footer */}
+          <div className="border-t border-slate-200 p-4">
+            <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                <span className="text-xs font-medium text-slate-600">
+                  WorkMate AI is ready
+                </span>
+              </div>
+            </div>
+          </div>
         </aside>
 
         {/* Chat */}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col bg-white">
+
           <ChatHeader />
 
-          <main className="flex-1 space-y-4 overflow-y-auto p-6">
-            {messages.map((message, index) => (
-              <ChatMessage
-                key={index}
-                role={message.role}
-                content={message.content}
-              />
-            ))}
+          {/* Messages */}
+          <main className="flex-1 overflow-y-auto bg-slate-50/50 px-4 py-6 sm:px-8">
+            <div className="mx-auto max-w-4xl space-y-5">
+              {messages.map((message, index) => (
+                <ChatMessage
+                  key={index}
+                  role={message.role}
+                  content={message.content}
+                />
+              ))}
 
-            {loading && (
-              <ChatMessage
-                role="assistant"
-                content="Thinking..."
-              />
-            )}
+              {loading && (
+                <ChatMessage
+                  role="assistant"
+                  content="Thinking..."
+                />
+              )}
 
-            {waitingForApproval && (
-              <ChatMessage
-                role="assistant"
-                content="Waiting for reviewer approval..."
-              />
-            )}
+              {waitingForApproval && (
+                <ChatMessage
+                  role="assistant"
+                  content="Waiting for reviewer approval..."
+                />
+              )}
+            </div>
           </main>
 
-          <ChatInput
-            value={input}
-            onChange={setInput}
-            onSubmit={handleSend}
-          />
+          {/* Input */}
+          <div className="border-t border-slate-200 bg-white px-4 py-4 sm:px-8">
+            <div className="mx-auto max-w-4xl">
+              <ChatInput
+                value={input}
+                onChange={setInput}
+                onSubmit={handleSend}
+              />
+
+              <p className="mt-2 text-center text-[11px] text-slate-400">
+                WorkMate AI can help with HR, IT, Facilities, and company policies.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
