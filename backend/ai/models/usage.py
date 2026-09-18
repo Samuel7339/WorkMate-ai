@@ -1,8 +1,7 @@
 MODEL_PRICING = {
-    "input": 0.0,
-    "output": 0.0,
+    "input": 0.30,
+    "output": 2.50,
 }
-
 def calculate_cost(input_tokens: int, output_tokens: int) -> float:
     input_cost = (input_tokens / 1_000_000) * MODEL_PRICING["input"]
     output_cost = (output_tokens / 1_000_000) * MODEL_PRICING["output"]
