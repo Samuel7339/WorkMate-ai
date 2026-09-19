@@ -10,6 +10,12 @@ from ..tools.facilities_tools import (
     check_maintenance_status,
     create_maintenance_ticket,
 )
+from ..tools.employee_tools import (
+    get_employee_profile,
+    get_my_requests,
+    get_request_history,
+    get_approval_status,
+)
 from ..tools.rag_tools import search_company_policy
 
 
@@ -29,9 +35,13 @@ def create_facilities_agent(checkpointer):
         model=model,
         tools=[
             check_maintenance_status,
+            get_employee_profile,
+            get_my_requests,
+            get_request_history,
+            get_approval_status,
             # create_maintenance_ticket,
             search_company_policy,
-        ],
+],
         middleware=[
             model_call_limit,
             summarization,
@@ -108,5 +118,11 @@ or company policy information.
 
 If required information is unavailable,
 clearly say so.
+
+When answering from company policy documents:
+- Use the retrieved document content as the source of truth.
+- Do not invent or modify policy information.
+- Mention the source document and page when appropriate.
+
 """,
     )

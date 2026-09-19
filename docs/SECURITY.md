@@ -1,146 +1,112 @@
-# WorkMate AI Security Review
+# WorkMate AI — Security Review
 
-## 1. Security Scope
+## 1. Scope
 
-WorkMate AI handles employee workplace requests related to:
+This document describes the security controls and known limitations of the WorkMate AI employee helpdesk application.
 
-- HR
-- IT
-- Facilities
-- Company policies
+WorkMate handles:
 
-The system uses AI agents, tools, RAG, persistent memory, and human approval workflows.
-
----
+* Employee requests
+* HR, IT, and Facilities information
+* Company policy documents
+* Approval workflows
+* Request and ticket status
 
 ## 2. Security Controls
 
-### Prompt Injection Protection
+### Employee validation
 
-WorkMate AI checks retrieved policy content for known prompt-injection patterns before returning it to the agent.
+The backend validates that the supplied employee ID exists in the employee database before processing a request.
 
-Examples of blocked patterns include:
+### Approval authorization
 
-- Ignore previous instructions
-- Ignore the system prompt
-- Reveal system prompt
-- Reveal hidden instructions
-- Disregard previous instructions
+Approval requests contain an employee ID.
 
-Implementation:
+Before an approval decision is processed, the backend checks that the employee ID associated with the pending approval matches the employee ID supplied with the approval request.
 
-`backend/ai/security/prompt_injection.py`
+This prevents an approval request for one employee from being processed using a different employee ID within the current application flow.
 
-The evaluation suite includes prompt-injection test cases.
+### Prompt-injection protection
 
----
+Retrieved company-policy documents are checked for prompt-injection content before they are returned to the agent.
 
-### Tool Output Protection
+If a retrieved document contains detected prompt-injection content, it is excluded from the result.
 
-Tool outputs are treated as untrusted data.
+### Sensitive information
 
-The supervisor instructions explicitly prevent the agent from following instructions contained inside tool results.
+WorkMate should not request or expose:
 
-The system does not allow tool output to override system instructions.
+* Passwords
+* Authentication codes
+* API keys
+* Other secrets
 
----
+Employees should not provide sensitive credentials to the assistant.
 
-### Secret Protection
+### Approval gate
 
-Environment variables are stored in `.env`.
+Actions that require human approval do not execute immediately.
 
-The `.env` file is excluded from Git using `.gitignore`.
+The workflow pauses and waits for an approval decision before completing the action.
 
-API keys and other environment secrets are therefore not committed to the repository.
+### Conversation deletion
 
----
+Deleting a conversation removes its:
 
-### Structured Output
+* Chat messages
+* Conversation record
+* Approval records
 
-AI specialist responses are validated using the `WorkMateResponse` Pydantic schema.
+The associated LangGraph checkpoint threads are also deleted.
 
-This restricts important fields such as:
+This prevents the deleted conversation from being recovered through the application's stored conversation history or LangGraph checkpoint memory.
 
-- Department
-- Confidence
-- Approval requirement
-- Human escalation requirement
+## 3. Known Security Limitation
 
-Invalid department values are rejected by the schema.
+### No real authentication
 
----
+The current capstone does not implement a real authentication system.
 
-### Human Approval
-
-Actions that require approval do not execute immediately.
-
-The workflow:
-
-1. Detects that approval is required.
-2. Creates an approval interrupt.
-3. Waits for a reviewer decision.
-4. Executes the action only after approval.
-5. Does not execute the action after rejection.
-
-Implementation:
-
-`backend/ai/agents/approval_workflow.py`
-
----
-
-### Human Escalation
-
-Requests with low confidence or an explicit human requirement are routed to escalation instead of being automatically completed.
-
-The current confidence threshold is `0.70`.
-
-Implementation:
-
-`backend/ai/security/escalation.py`
-
----
-
-### RAG Document Filtering
-
-Policy documents are retrieved from the approved document corpus.
-
-Retrieved documents are checked for prompt-injection patterns before being returned by the policy search tool.
-
-Implementation:
-
-`backend/ai/tools/rag_tools.py`
-
----
-
-## 3. Authorization
-
-The project contains authorization logic for identifying whether a user is allowed to perform protected operations.
-
-The approval workflow is also separated from the employee chatbot.
-
-Employees receive a message that their request was sent for review, while approval is handled through the reviewer approval page.
-
----
-
-## 4. Security Testing
-
-The project includes tests covering:
-
-- Prompt injection
-- RAG security
-- Authorization
-- Approval workflow
-- Escalation
-- Action routing
-- Structured responses
-
-The deterministic evaluation suite contains 30 cases.
-
-Latest evaluation result:
-
-`30/30 passed`
-
-The evaluation suite can be run with:
+The frontend currently uses a temporary employee identity:
 
 ```text
-python -m evaluation.run_evaluation
+EMP001
+```
+
+The backend validates this ID against the employee database, but the application does not currently prove that the person making the request is actually EMP001.
+
+Therefore, the current employee ID check should be considered an application-level authorization check, not full user authentication.
+
+A production deployment would require authenticated user identity, such as a company SSO or another trusted authentication mechanism, and the backend should obtain the employee identity from the authenticated session rather than trusting a value supplied by the client.
+
+## 4. Other Production Considerations
+
+For a production deployment, additional controls would be required, including:
+
+* HTTPS
+* Secure authentication
+* Server-side authorization
+* Proper secret management
+* Rate limiting
+* Audit logging
+* Database access controls
+* Input validation
+* Security monitoring
+
+These are outside the scope of this capstone implementation.
+
+## 5. Security Test
+
+The project includes an injection test that verifies that detected prompt-injection content from retrieved documents is blocked.
+
+The approval workflow also verifies that an approval decision cannot be processed when the supplied employee ID does not match the employee associated with the pending approval.
+
+## 6. Security Review Result
+
+The current implementation identifies a real security limitation:
+
+> Employee identity is supplied by the client and is not backed by real authentication.
+
+The application reduces this risk with backend employee validation and approval ownership checks, but these controls do not replace authentication.
+
+This limitation should be addressed before using WorkMate AI in a real production employee environment.

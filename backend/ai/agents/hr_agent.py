@@ -11,6 +11,12 @@ from ..tools.hr_tools import (
     check_leave_balance,
     create_hr_request,
 )
+from ..tools.employee_tools import (
+    get_employee_profile,
+    get_my_requests,
+    get_request_history,
+    get_approval_status,
+)
 from ..tools.rag_tools import search_company_policy
 
 
@@ -30,6 +36,10 @@ def create_hr_agent(checkpointer):
         model=model,
         tools=[
             check_leave_balance,
+            get_employee_profile,
+            get_my_requests,
+            get_request_history,
+            get_approval_status,
             # create_hr_request,
             search_company_policy,
         ],
@@ -82,4 +92,9 @@ Do not invent employee data or company policy information.
 
 If the required information is unavailable,
 clearly say so.
+
+When answering from company policy documents:
+- Use the retrieved document content as the source of truth.
+- Do not invent or modify policy information.
+- Mention the source document and page when appropriate.
 """)

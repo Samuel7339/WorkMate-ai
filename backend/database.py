@@ -17,6 +17,21 @@ def init_db():
     cursor = connection.cursor()
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS approvals (
+            approval_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thread_id TEXT NOT NULL,
+            request_id TEXT,
+            employee_id TEXT NOT NULL,
+            department TEXT NOT NULL,
+            action TEXT NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS employees (
             employee_id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -169,3 +184,164 @@ def get_conversations():
     connection.close()
 
     return [dict(conversation) for conversation in conversations]
+
+
+def create_approval(
+    thread_id: str,
+    employee_id: str,
+    department: str,
+    action: str,
+    description: str,
+    request_id: str | None = None,
+):
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        INSERT INTO approvals (
+            thread_id,
+            request_id,
+            employee_id,
+            department,
+            action,
+            description,
+            status
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            thread_id,
+            request_id,
+            employee_id,
+            department,
+            action,
+            description,
+            "pending",
+        ),
+    )
+
+    connection.commit()
+    approval_id = cursor.lastrowid
+    connection.close()
+
+    return approval_id
+
+
+def get_pending_approval(thread_id: str):
+    connection = get_connection()
+
+    approval = connection.execute(
+        """
+        SELECT *
+        FROM approvals
+        WHERE thread_id = ?
+        AND status = 'pending'
+        ORDER BY approval_id DESC
+        LIMIT 1
+        """,
+        (thread_id,),
+    ).fetchone()
+
+    connection.close()
+
+    return dict(approval) if approval else None
+
+
+def get_approval_history(thread_id: str):
+    connection = get_connection()
+
+    approvals = connection.execute(
+        """
+        SELECT *
+        FROM approvals
+        WHERE thread_id = ?
+        ORDER BY approval_id DESC
+        """,
+        (thread_id,),
+    ).fetchall()
+
+    connection.close()
+
+    return [dict(approval) for approval in approvals]
+
+
+
+def update_approval(
+    thread_id: str,
+    status: str,
+    request_id: str | None = None,
+):
+    connection = get_connection()
+
+    connection.execute(
+        """
+        UPDATE approvals
+        SET
+            status = ?,
+            request_id = COALESCE(?, request_id),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE thread_id = ?
+        AND status = 'pending'
+        """,
+        (
+            status,
+            request_id,
+            thread_id,
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def delete_conversation(thread_id: str):
+    connection = get_connection()
+
+    connection.execute(
+        """
+        DELETE FROM chat_messages
+        WHERE thread_id = ?
+        """,
+        (thread_id,),
+    )
+
+    connection.execute(
+        """
+        DELETE FROM conversations
+        WHERE thread_id = ?
+        """,
+        (thread_id,),
+    )
+
+    connection.execute(
+        """
+        DELETE FROM approvals
+        WHERE thread_id = ?
+        """,
+        (thread_id,),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+# def delete_conversation(thread_id: str):
+#     connection = get_connection()
+
+#     connection.execute(
+#         "DELETE FROM chat_messages WHERE thread_id = ?",
+#         (thread_id,),
+#     )
+
+#     connection.execute(
+#         "DELETE FROM conversations WHERE thread_id = ?",
+#         (thread_id,),
+#     )
+
+#     connection.execute(
+#         "DELETE FROM approvals WHERE thread_id = ?",
+#         (thread_id,),
+#     )
+
+#     connection.commit()
+#     connection.close()
