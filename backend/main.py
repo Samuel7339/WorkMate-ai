@@ -239,9 +239,18 @@ async def chat(request: ChatRequest):
 
         if specialist_response:
 
+            # print("========== SPECIALIST DEBUG ==========")
+            # print("requires_approval:", specialist_response.response.requires_approval)
+            # print("requires_human:", specialist_response.response.requires_human)
+            # print("confidence:", specialist_response.response.confidence)
+            # print("intent:", specialist_response.response.intent)
+
             action = route_action(
                 specialist_response.response
             )
+
+            # print("ROUTED ACTION:", action)
+            # print("======================================")
 
             if action == "approval":
 

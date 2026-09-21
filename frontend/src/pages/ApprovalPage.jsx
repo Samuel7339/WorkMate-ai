@@ -1,5 +1,20 @@
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Check,
+  X,
+  ShieldCheck,
+  User,
+  Building2,
+  History,
+  CheckCircle2,
+  XCircle,
+  Hash,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 function ApprovalPage() {
   const [approvals, setApprovals] = useState([]);
@@ -28,9 +43,9 @@ function ApprovalPage() {
     } catch (error) {
       console.error(error);
 
-      setMessage(
-        "Unable to load approval requests."
-      );
+      const errorMsg = "Unable to load approval requests.";
+      setMessage(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -57,9 +72,9 @@ function ApprovalPage() {
     } catch (error) {
       console.error(error);
 
-      setMessage(
-        "Unable to load approval history."
-      );
+      const errorMsg = "Unable to load approval history.";
+      setMessage(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setHistoryLoading(false);
     }
@@ -120,15 +135,16 @@ function ApprovalPage() {
           data.result?.request?.request_id ||
           data.request_id;
 
-        setMessage(
-          ticketId
-            ? `Request approved. Request ID: ${ticketId} has been created.`
-            : "Request approved successfully."
-        );
+        const successMsg = ticketId
+          ? `Request approved. Request ID: ${ticketId} has been created.`
+          : "Request approved successfully.";
+
+        setMessage(successMsg);
+        toast.success(successMsg);
       } else {
-        setMessage(
-          "Request rejected. No action was created."
-        );
+        const rejectMsg = "Request rejected. No action was created.";
+        setMessage(rejectMsg);
+        toast.info(rejectMsg);
       }
 
       setApprovals((current) =>
@@ -145,290 +161,281 @@ function ApprovalPage() {
     } catch (error) {
       console.error(error);
 
-      setMessage(
-        "Unable to process the approval request."
-      );
+      const errorMsg = "Unable to process the approval request.";
+      setMessage(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setProcessingId(null);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-3xl">
-
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-6 md:p-8">
+      <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
         {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-sm">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            WorkMate AI
-          </h1>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-base sm:text-xl font-bold tracking-tight text-slate-900">
+                  WorkMate AI Reviewer Portal
+                </h1>
+                <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200/60">
+                  {approvals.length} Pending
+                </span>
+              </div>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Reviewer Approval
-          </p>
-        </div>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Review and authorize privileged IT and HR action requests.
+              </p>
+            </div>
+          </div>
 
-        {/* History Button */}
+          <div className="flex items-center gap-2.5 self-start sm:self-center">
 
-        <div className="mb-6">
-          <button
-            type="button"
-            onClick={handleHistoryClick}
-            className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-medium text-white hover:bg-gray-800"
-          >
-            {showHistory
-              ? "Hide Approval History"
-              : "View Approval History"}
-          </button>
+            <button
+              type="button"
+              onClick={handleHistoryClick}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
+            >
+              <History className="h-3.5 w-3.5" />
+              {showHistory ? "Hide History" : "View History"}
+            </button>
+          </div>
         </div>
 
         {/* Approval History */}
-
         {showHistory && (
-          <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">
+                  Approval History
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Previously approved and rejected requests.
+                </p>
+              </div>
 
-            <div className="mb-5">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Approval History
-              </h2>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Previously approved and rejected requests.
-              </p>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                {history.length} records
+              </span>
             </div>
 
             {historyLoading && (
-              <p className="text-sm text-gray-500">
-                Loading approval history...
-              </p>
+              <div className="flex items-center gap-2 py-6 text-sm text-slate-500">
+                <Loader2 className="h-4 w-4 text-blue-600" />
+                <span>Loading approval history...</span>
+              </div>
             )}
 
-            {!historyLoading &&
-              history.length === 0 && (
-                <p className="text-sm text-gray-500">
-                  No approval history found.
-                </p>
-              )}
+            {!historyLoading && history.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-8 text-center">
+                <p className="text-xs text-slate-400">No approval history found.</p>
+              </div>
+            )}
 
-            {!historyLoading &&
-              history.length > 0 && (
-                <div className="space-y-4">
-                  {history.map((approval) => (
-                    <div
-                      key={approval.approval_id}
-                      className="rounded-xl border border-gray-200 p-4"
-                    >
-                      <div className="flex items-start justify-between gap-4">
+            {!historyLoading && history.length > 0 && (
+              <div className="space-y-3">
+                {history.map((approval) => (
+                  <div
+                    key={approval.approval_id}
+                    className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-4 transition"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {approval.action}
+                      </p>
 
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {approval.action}
-                          </p>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          approval.status === "approved"
+                            ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : approval.status === "rejected"
+                            ? "border border-rose-200 bg-rose-50 text-rose-700"
+                            : "border border-amber-200 bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {approval.status === "approved" ? (
+                          <CheckCircle2 className="h-3 w-3" />
+                        ) : approval.status === "rejected" ? (
+                          <XCircle className="h-3 w-3" />
+                        ) : null}
+                        <span className="capitalize">{approval.status}</span>
+                      </span>
+                    </div>
 
-                          <p className="mt-1 text-sm text-gray-500">
-                            Employee:{" "}
-                            {approval.employee_id}
-                          </p>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <span className="inline-flex items-center gap-1">
+                        <User className="h-3 w-3 text-slate-400" />
+                        Employee:{" "}
+                        <strong className="font-medium text-slate-700">
+                          {approval.employee_id}
+                        </strong>
+                      </span>
 
-                          <p className="text-sm text-gray-500">
-                            Department:{" "}
-                            {approval.department}
-                          </p>
-                        </div>
-
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${
-                            approval.status === "approved"
-                              ? "bg-green-100 text-green-700"
-                              : approval.status ===
-                                "rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {approval.status}
-                        </span>
-
-                      </div>
-
-                      <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                        <p className="text-sm text-gray-700">
-                          {approval.description}
-                        </p>
-                      </div>
+                      <span className="inline-flex items-center gap-1">
+                        <Building2 className="h-3 w-3 text-slate-400" />
+                        Department:{" "}
+                        <strong className="font-medium text-slate-700">
+                          {approval.department}
+                        </strong>
+                      </span>
 
                       {approval.request_id && (
-                        <p className="mt-3 text-xs text-gray-500">
+                        <span className="inline-flex items-center gap-1">
+                          <Hash className="h-3 w-3 text-slate-400" />
                           Request ID:{" "}
-                          <span className="font-medium text-gray-700">
+                          <strong className="font-medium text-slate-700">
                             {approval.request_id}
-                          </span>
-                        </p>
-                      )}
-
-                      {approval.created_at && (
-                        <p className="mt-1 text-xs text-gray-400">
-                          Created:{" "}
-                          {approval.created_at}
-                        </p>
-                      )}
-
-                      {approval.updated_at && (
-                        <p className="mt-1 text-xs text-gray-400">
-                          Updated:{" "}
-                          {approval.updated_at}
-                        </p>
+                          </strong>
+                        </span>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    <div className="mt-2.5 rounded-lg border border-slate-200/60 bg-white p-2.5 text-xs text-slate-700 leading-relaxed">
+                      {approval.description}
+                    </div>
+
+                    {(approval.created_at || approval.updated_at) && (
+                      <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-slate-400">
+                        {approval.created_at && (
+                          <span>Created: {approval.created_at}</span>
+                        )}
+                        {approval.updated_at && (
+                          <span>Updated: {approval.updated_at}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Loading Pending Approvals */}
-
         {loading && (
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Loading approval requests...
-            </p>
+          <div className="flex items-center justify-center gap-2.5 rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
+            <Loader2 className="h-5 w-5 text-blue-600" />
+            <span>Loading approval requests...</span>
           </div>
         )}
 
         {/* No Pending Approvals */}
-
-        {!loading &&
-          approvals.length === 0 &&
-          !message && (
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">
-                No pending approvals
-              </h2>
-
-              <p className="mt-2 text-sm text-gray-500">
-                There are currently no requests waiting
-                for approval.
-              </p>
+        {!loading && approvals.length === 0 && !message && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <CheckCircle2 className="h-6 w-6" />
             </div>
-          )}
+
+            <h2 className="text-base font-semibold text-slate-900">
+              No pending approvals
+            </h2>
+
+            <p className="mt-1 text-xs text-slate-500">
+              All requests have been reviewed. There are currently no items
+              waiting for approval.
+            </p>
+          </div>
+        )}
 
         {/* Pending Approvals */}
-
         {approvals.map((approval) => (
           <div
             key={approval.thread_id}
-            className="mb-4 rounded-2xl bg-white p-6 shadow-sm"
+            className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm"
           >
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Approval Required
-              </h2>
+            <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <span className="mb-1.5 inline-flex items-center rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                  Authorization Required
+                </span>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Review this request before allowing the
-                action.
-              </p>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                  {approval.action}
+                </h2>
+              </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="mb-5 space-y-3 text-sm">
+              <div className="flex flex-wrap gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs sm:text-sm">
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <User className="h-4 w-4 text-slate-400" />
+                  <span className="text-slate-500">Employee:</span>
+                  <span className="font-semibold text-slate-800">
+                    {approval.employee_id}
+                  </span>
+                </div>
 
-              <div>
-                <p className="text-sm text-gray-500">
-                  Action
-                </p>
-
-                <p className="font-medium text-gray-900">
-                  {approval.action}
-                </p>
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <Building2 className="h-4 w-4 text-slate-400" />
+                  <span className="text-slate-500">Department:</span>
+                  <span className="font-semibold text-slate-800">
+                    {approval.department}
+                  </span>
+                </div>
               </div>
 
               <div>
-                <p className="text-sm text-gray-500">
-                  Employee
-                </p>
-
-                <p className="font-medium text-gray-900">
-                  {approval.employee_id}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500">
-                  Department
-                </p>
-
-                <p className="font-medium text-gray-900">
-                  {approval.department}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Description
                 </p>
 
-                <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
+                <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 text-sm text-slate-800 leading-relaxed">
                   {approval.description}
-                </p>
+                </div>
               </div>
-
             </div>
 
-            <div className="mt-6 flex gap-3">
-
+            <div className="flex gap-3">
               <button
                 type="button"
-                disabled={
-                  processingId ===
-                  approval.thread_id
-                }
+                disabled={processingId === approval.thread_id}
                 onClick={() =>
-                  handleDecision(
-                    approval.thread_id,
-                    "approved"
-                  )
+                  handleDecision(approval.thread_id, "approved")
                 }
-                className="flex-1 rounded-xl bg-green-600 px-4 py-3 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {processingId ===
-                approval.thread_id
-                  ? "Processing..."
-                  : "Approve"}
+                {processingId === approval.thread_id ? (
+                  <>
+                    <Loader2 className="h-4 w-4" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <span>Approve</span>
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
-                disabled={
-                  processingId ===
-                  approval.thread_id
-                }
+                disabled={processingId === approval.thread_id}
                 onClick={() =>
-                  handleDecision(
-                    approval.thread_id,
-                    "rejected"
-                  )
+                  handleDecision(approval.thread_id, "rejected")
                 }
-                className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Reject
+                <X className="h-4 w-4" />
+                <span>Reject</span>
               </button>
-
             </div>
           </div>
         ))}
 
         {/* Message */}
-
         {message && (
-          <div className="mt-4 rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-700">
-              {message}
-            </p>
+          <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <AlertCircle className="h-5 w-5 shrink-0 text-blue-600 mt-0.5" />
+            <p className="text-sm text-slate-700">{message}</p>
           </div>
         )}
-
       </div>
     </div>
   );
